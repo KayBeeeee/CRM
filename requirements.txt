@@ -1,4 +1,6 @@
-Flask==3.2.2
-Flask-SQLAlchemy==3.0.5
-PyMySQL==1.1.0
-gunicorn==25.1.0
+Flask
+Flask-SQLAlchemy
+psycopg2-binary
+gunicorn
+pymysql
+Gunicorn
