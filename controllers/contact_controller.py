@@ -1,33 +1,29 @@
-from flask import Blueprint, render_template, request, redirect, url_for
-from app import db
-from models.contact import Contact
+from flask import Blueprint, render_template, request, redirect, url_for, flash
+from models import db, Contact, Client
 
-contact_bp = Blueprint("contacts", __name__, url_prefix="/contacts")
+contact_bp = Blueprint('contacts', __name__, template_folder='../templates/contacts')
 
-
-@contact_bp.route("/")
+@contact_bp.route('/')
 def list_contacts():
     contacts = Contact.query.order_by(Contact.surname.asc(), Contact.name.asc()).all()
-    return render_template("contacts/list.html", contacts=contacts)
+    return render_template('list_contacts.html', contacts=contacts)
 
-
-@contact_bp.route("/create", methods=["GET", "POST"])
+@contact_bp.route('/new', methods=['GET', 'POST'])
 def create_contact():
-    if request.method == "POST":
-        name = request.form["name"]
-        surname = request.form["surname"]
-        email = request.form["email"]
-
-        if not name or not surname or not email:
-            return render_template("contacts/form.html", error="All fields required")
-
-        if Contact.query.filter_by(email=email).first():
-            return render_template("contacts/form.html", error="Email must be unique")
-
+    if request.method == 'POST':
+        name = request.form.get('name')
+        surname = request.form.get('surname')
+        email = request.form.get('email')
+        if not (name and surname and email):
+            flash("All fields are required", "error")
+            return redirect(url_for('contacts.create_contact'))
+        existing = Contact.query.filter_by(email=email).first()
+        if existing:
+            flash("Email must be unique", "error")
+            return redirect(url_for('contacts.create_contact'))
         contact = Contact(name=name, surname=surname, email=email)
         db.session.add(contact)
         db.session.commit()
-
-        return redirect(url_for("contacts.list_contacts"))
-
-    return render_template("contacts/form.html")
+        return redirect(url_for('contacts.list_contacts'))
+    clients = Client.query.order_by(Client.name.asc()).all()
+    return render_template('create_contact.html', clients=clients)

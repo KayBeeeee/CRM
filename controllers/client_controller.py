@@ -1,53 +1,26 @@
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify
-from app import db
-from models.client import Client
-from models.contact import Contact
+from flask import Blueprint, render_template, request, redirect, url_for, flash
+from models import db, Client, Contact
 from services.client_code_generator import generate_client_code
 
-client_bp = Blueprint("clients", __name__, url_prefix="/clients")
+client_bp = Blueprint('clients', __name__, template_folder='../templates/clients')
 
-
-@client_bp.route("/")
+@client_bp.route('/')
 def list_clients():
     clients = Client.query.order_by(Client.name.asc()).all()
-    return render_template("clients/list.html", clients=clients)
+    return render_template('list_clients.html', clients=clients)
 
-
-@client_bp.route("/create", methods=["GET", "POST"])
+@client_bp.route('/new', methods=['GET', 'POST'])
 def create_client():
-    if request.method == "POST":
-        name = request.form["name"]
-
+    if request.method == 'POST':
+        name = request.form.get('name')
+        additional_info = request.form.get('additional_info')
         if not name:
-            return render_template("clients/form.html", error="Name is required")
-
-        code = generate_client_code(name)
-
-        client = Client(name=name, client_code=code)
+            flash("Name is required", "error")
+            return redirect(url_for('clients.create_client'))
+        client = Client(name=name, additional_info=additional_info)
         db.session.add(client)
+        db.session.flush()  # get ID for code generation
+        client.client_code = generate_client_code(name, db.session, Client)
         db.session.commit()
-
-        return redirect(url_for("clients.edit_client", client_id=client.id))
-
-    return render_template("clients/form.html")
-
-
-@client_bp.route("/<int:client_id>", methods=["GET"])
-def edit_client(client_id):
-    client = Client.query.get_or_404(client_id)
-    contacts = Contact.query.order_by(Contact.surname.asc()).all()
-    return render_template("clients/form.html", client=client, contacts=contacts)
-
-
-@client_bp.route("/<int:client_id>/link", methods=["POST"])
-def link_contact(client_id):
-    client = Client.query.get_or_404(client_id)
-    contact_id = request.json.get("contact_id")
-
-    contact = Contact.query.get(contact_id)
-
-    if contact not in client.contacts:
-        client.contacts.append(contact)
-        db.session.commit()
-
-    return jsonify({"status": "linked"})
+        return redirect(url_for('clients.list_clients'))
+    return render_template('create_client.html')

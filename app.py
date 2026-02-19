@@ -1,28 +1,33 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from config import Config
+from models import db
+from controllers.client_controller import client_bp
+from controllers.contact_controller import contact_bp
 
-db = SQLAlchemy()
+from app import create_app
+from models import db
+
+app = create_app()
+with app.app_context():
+    db.create_all()
+    print("Database initialized!")
+
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
-
     db.init_app(app)
 
-    with app.app_context():
-        from models.client import Client
-        from models.contact import Contact
-        db.create_all()
+    # Register controllers
+    app.register_blueprint(client_bp, url_prefix='/clients')
+    app.register_blueprint(contact_bp, url_prefix='/contacts')
 
-    from controllers.client_controller import client_bp
-    from controllers.contact_controller import contact_bp
-
-    app.register_blueprint(client_bp)
-    app.register_blueprint(contact_bp)
-
-    @app.route("/")
-    def index():
-        return "CRM App Running"
+    @app.route('/')
+    def home():
+        return "<h2>CRM App Running</h2><p>Go to /clients or /contacts</p>"
 
     return app
+
+if __name__ == "__main__":
+    app = create_app()
+    app.run(debug=True, host='0.0.0.0', port=8080)

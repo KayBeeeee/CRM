@@ -3,18 +3,23 @@
 <head>
     <title>CRM App</title>
     <link rel="stylesheet" href="/static/css/style.css">
-    <script src="/static/js/validation.js"></script>
-    <script src="/static/js/ajax.js"></script>
+    <script src="/static/js/script.js"></script>
 </head>
 <body>
+    <h1>CRM App</h1>
+    <nav>
+        <a href="/clients">Clients</a> |
+        <a href="/contacts">Contacts</a>
+    </nav>
+    <hr>
     {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
+    {% if messages %}
         <ul>
         {% for category, message in messages %}
-          <li class="{{ category }}">{{ message }}</li>
+            <li class="{{ category }}">{{ message }}</li>
         {% endfor %}
         </ul>
-      {% endif %}
+    {% endif %}
     {% endwith %}
     {% block content %}{% endblock %}
 </body>

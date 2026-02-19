@@ -1,24 +1,13 @@
-from app import db
-from models.client import Client
-import string
-
-def generate_client_code(name):
-    cleaned = ''.join(filter(str.isalpha, name.upper()))
-
-    prefix = cleaned[:3]
-
+def generate_client_code(client_name, db_session, Client):
+    # Take first 3 letters of name (uppercase)
+    prefix = client_name[:3].upper()
     if len(prefix) < 3:
-        for char in string.ascii_uppercase:
-            if len(prefix) == 3:
-                break
-            prefix += char
-
-    existing = Client.query.filter(Client.client_code.like(f"{prefix}%")).all()
-
-    numbers = []
-    for client in existing:
-        numbers.append(int(client.client_code[3:]))
-
-    next_number = 1 if not numbers else max(numbers) + 1
-
-    return f"{prefix}{str(next_number).zfill(3)}"
+        prefix += ''.join(chr(65 + i) for i in range(3 - len(prefix)))
+    
+    # Find existing codes starting with prefix
+    existing_codes = db_session.query(Client.client_code)\
+        .filter(Client.client_code.like(f"{prefix}%")).all()
+    existing_numbers = [int(c[0][3:]) for c in existing_codes if c[0][3:].isdigit()]
+    
+    next_number = max(existing_numbers, default=0) + 1
+    return f"{prefix}{next_number:03d}"
