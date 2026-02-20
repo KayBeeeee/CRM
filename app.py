@@ -1,35 +1,45 @@
+# app.py
+import os
 from flask import Flask
 from config import Config
 from models import db
 from controllers.client_controller import client_bp
 from controllers.contact_controller import contact_bp
 
-
 def create_app():
     app = Flask(__name__)
+
+    # Load config
     app.config.from_object(Config)
 
+    # Railway MySQL database
+    database_url = os.environ.get("DATABASE_URL")  # Should be something like mysql+pymysql://user:pass@host:port/dbname
+    if database_url:
+        app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+
+    # Disable modification tracking
+    app.config.setdefault("SQLALCHEMY_TRACK_MODIFICATIONS", False)
+
+    # Initialize database
     db.init_app(app)
 
-    # Register controllers
-    app.register_blueprint(client_bp, url_prefix='/clients')
-    app.register_blueprint(contact_bp, url_prefix='/contacts')
+    # Register blueprints
+    app.register_blueprint(client_bp, url_prefix="/clients")
+    app.register_blueprint(contact_bp, url_prefix="/contacts")
 
-    @app.route('/')
+    # Simple home route
+    @app.route("/")
     def home():
         return "<h2>CRM App Running</h2><p>Go to /clients or /contacts</p>"
+
+    # Create tables if not exist
+    with app.app_context():
+        db.create_all()
+        print("Database initialized!")
 
     return app
 
 
-# Create app instance for Gunicorn
-app = create_app()
-
-# Initialize database
-with app.app_context():
-    db.create_all()
-    print("Database initialized!")
-
-
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port=8080)
+    app = create_app()
+    app.run(debug=True, host="0.0.0.0", port=8080)
