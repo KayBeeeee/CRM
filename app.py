@@ -8,23 +8,32 @@ from controllers.contact_controller import contact_bp
 
 def create_app():
     app = Flask(__name__)
-
-    # Load config
     app.config.from_object(Config)
 
-    # Initialize database
+    database_url = os.environ.get("DATABASE_URL")
+
+    if database_url:
+        # Force SQLAlchemy to use pymysql instead of MySQLdb
+        if database_url.startswith("mysql://"):
+            database_url = database_url.replace(
+                "mysql://",
+                "mysql+pymysql://",
+                1
+            )
+
+        app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
     db.init_app(app)
 
-    # Register blueprints
     app.register_blueprint(client_bp, url_prefix="/clients")
     app.register_blueprint(contact_bp, url_prefix="/contacts")
 
-    # Home route
     @app.route("/")
     def home():
         return "<h2>CRM App Running</h2><p>Go to /clients or /contacts</p>"
 
-    # Create tables automatically
     with app.app_context():
         db.create_all()
         print("Database initialized!")
@@ -32,7 +41,7 @@ def create_app():
     return app
 
 
-# For local development
+app = create_app()
+
 if __name__ == "__main__":
-    app = create_app()
     app.run(debug=True, host="0.0.0.0", port=8080)
