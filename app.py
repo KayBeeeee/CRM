@@ -4,18 +4,11 @@ from models import db
 from controllers.client_controller import client_bp
 from controllers.contact_controller import contact_bp
 
-from app import create_app
-from models import db
-
-app = create_app()
-with app.app_context():
-    db.create_all()
-    print("Database initialized!")
-
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+
     db.init_app(app)
 
     # Register controllers
@@ -28,6 +21,15 @@ def create_app():
 
     return app
 
+
+# Create app instance for Gunicorn
+app = create_app()
+
+# Initialize database
+with app.app_context():
+    db.create_all()
+    print("Database initialized!")
+
+
 if __name__ == "__main__":
-    app = create_app()
     app.run(debug=True, host='0.0.0.0', port=8080)
