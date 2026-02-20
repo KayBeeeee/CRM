@@ -1,8 +1,11 @@
+# models.py
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 
-client_contacts = db.Table('client_contacts',
+# Association table for many-to-many relationship
+client_contacts = db.Table(
+    'client_contacts',
     db.Column('client_id', db.Integer, db.ForeignKey('clients.id'), primary_key=True),
     db.Column('contact_id', db.Integer, db.ForeignKey('contacts.id'), primary_key=True)
 )

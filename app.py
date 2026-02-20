@@ -12,14 +12,6 @@ def create_app():
     # Load config
     app.config.from_object(Config)
 
-    # Railway MySQL database
-    database_url = os.environ.get("DATABASE_URL")  # Should be something like mysql+pymysql://user:pass@host:port/dbname
-    if database_url:
-        app.config["SQLALCHEMY_DATABASE_URI"] = database_url
-
-    # Disable modification tracking
-    app.config.setdefault("SQLALCHEMY_TRACK_MODIFICATIONS", False)
-
     # Initialize database
     db.init_app(app)
 
@@ -27,12 +19,12 @@ def create_app():
     app.register_blueprint(client_bp, url_prefix="/clients")
     app.register_blueprint(contact_bp, url_prefix="/contacts")
 
-    # Simple home route
+    # Home route
     @app.route("/")
     def home():
         return "<h2>CRM App Running</h2><p>Go to /clients or /contacts</p>"
 
-    # Create tables if not exist
+    # Create tables automatically
     with app.app_context():
         db.create_all()
         print("Database initialized!")
@@ -40,6 +32,7 @@ def create_app():
     return app
 
 
+# For local development
 if __name__ == "__main__":
     app = create_app()
     app.run(debug=True, host="0.0.0.0", port=8080)
